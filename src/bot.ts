@@ -4,7 +4,7 @@ import { Telegraf, Context } from 'telegraf';
 import { UserGateway } from './dataAccess';
 import {CONFIG} from './config'
 
-class Bot {
+export class Bot {
   private bot: Telegraf<Context>;
   private userGateway: UserGateway;
   public phoneLost:boolean;
@@ -47,30 +47,39 @@ class Bot {
   }
 
   async enviarMensajeDeAlerta(username: string): Promise<void> {
-    
-    const chatId = await this.userGateway.getUserData(username);
-    if(chatId == false){
-        console.log('ERROR EN LA FUNCION ENVIARMENSAJE DE ALERTA: GETUSERDATA')
-    }else{
-        const message = `Hi ${username}, your phone is here,type 'stop' to stop receiving this message`;
-        if(this.phoneLost==false){
-            this.phoneLost=true
+    try {
+      let chatId = await this.userGateway.getUserData(username);
+      if (chatId == null) {
+        console.log('chatId es null:',chatId)
+      } else {
+        const message = `Hi ${username}, your phone is here, type 'stop' to stop receiving this message`;
+        if (!this.phoneLost) {
+          this.phoneLost = true;
         }
-        let phoneFound:boolean=false
-        while(phoneFound==false){
-            if(this.phoneLost==true){
-                this.bot.telegram.sendMessage(chatId, message);
-            }else if(this.phoneLost==false){
-             phoneFound=true
-            }    
+        const sendMessage = new Promise<void>((resolve) => {
+          setTimeout(() => {
+            resolve();
+          }, 1000);
+        });
+        const phoneFound = new Promise<void>((resolve) => {
+          const intervalId = setInterval(() => {
+            if (!this.phoneLost) {
+              clearInterval(intervalId);
+              resolve();
+            }
+          }, 1000);
+        });
+        await Promise.race([sendMessage, phoneFound]);
+        if (!this.phoneLost) {
+          await this.bot.telegram.sendMessage(chatId, message);
         }
-        
+      }
+    } catch (error) {
+      console.log(error)
     }
-    
-    
+   
   }
 }
 
-const userDataAccessService = UserGateway.getInstance();
-const bot = new Bot(userDataAccessService);
-bot.iniciar();
+
+

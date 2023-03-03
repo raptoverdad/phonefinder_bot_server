@@ -41,23 +41,30 @@ export class UserGateway {
     
   }
 
-  public async getUserData(user: string): Promise<string | false > {
-    let result: string | false=false;
+  public async getUserData(user: string): Promise<string | null > {
+    
     try {
-      const sql = 'SELECT chatid FROM users WHERE username = ?';
-      const values = [user];
+      let result: null |string =null;
+
       if (this.connection) {
+        const sql = 'SELECT chatid FROM users WHERE username = ?';
+        const values = [user];
+        console.log('connection established')
         const [rows] = await this.connection.execute<RowDataPacket[]>(sql, values);
-        if (Array.isArray(rows) && rows.length > 0) {
-            console.log('resultado: ' + rows[0].chatid);
+        console.log(rows)
+        if (rows.length > 0) {
+            console.log('i see results')
             result=rows[0].chatid
+            console.log(typeof(result))
           } else {
-            result=false;
+            console.log('something weird is happening here')
           }
       }
+      console.log('lets see what returns the result variable in the dataccess file:',result)
       return result
     } catch (error) {
-      result=false
+      console.log(error)
+      let result=null
       return result;
     }
    
