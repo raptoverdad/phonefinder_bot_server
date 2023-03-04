@@ -9,19 +9,27 @@ const app = express();
 app.use(express.json());
 
 app.listen(5000, () => {
-    console.log('Servidor iniciado en el puerto 5000');
-    console.log(CONFIG.TEST)
-    const userDataAccessService = UserGateway.getInstance();
-    const bot = new Bot(userDataAccessService);
-    let result =userDataAccessService.getUserData("LowLife2000")
-    console.log(result)
+    console.log("server listening on port 5000")
 });
 
-app.post('/findPhone', (req: Request, res: Response) => {
-  
-    //if(req.body.username){
-    //    bot.enviarMensajeDeAlerta(req.body.username)
-    //}
+app.post('/findPhone', async(req: Request, res: Response) => {
+    if(req.body.username)
+    {
+        const userDataAccessService =await UserGateway.getInstance();
+        if(userDataAccessService != null)
+        {
+            const bot =await new Bot(userDataAccessService);
+            if(bot instanceof Bot)
+            {
+                let result=await userDataAccessService.getUserData(req.body.username)
+                if(result != null)
+                {
+                    bot.enviarMensajeDeAlerta(req.body.username)
+                }
+            }
+            
+        }        
+    }
 });
 
 app.post('/register', (req: Request, res: Response) => {

@@ -12,10 +12,10 @@ export class UserGateway {
     this.connection = null;
   }
 
-  public static getInstance(): UserGateway {
+  public static async getInstance(): Promise<UserGateway> {
     if (!UserGateway.instance) {
       UserGateway.instance = new UserGateway();
-      UserGateway.instance.setupDatabase();
+      let setup=await UserGateway.instance.setupDatabase();
     }
     return UserGateway.instance;
   }
@@ -42,25 +42,28 @@ export class UserGateway {
   }
 
   public async getUserData(user: string): Promise<string | null > {
-    
+    console.log("DATA ACCESS:getuserdata function")
     try {
       let result: null |string =null;
 
       if (this.connection) {
+        console.log("connection ")
         const sql = 'SELECT chatid FROM users WHERE username = ?';
         const values = [user];
-        console.log('connection established')
+        console.log('DATA ACCESS:connection established')
         const [rows] = await this.connection.execute<RowDataPacket[]>(sql, values);
-        console.log(rows)
+        console.log("hola",rows)
         if (rows.length > 0) {
             console.log('i see results')
             result=rows[0].chatid
             console.log(typeof(result))
           } else {
-            console.log('something weird is happening here')
+            console.log('DATA ACCESS:something weird is happening here')
           }
+      }else{
+        console.log("connection to the database interrupted")
       }
-      console.log('lets see what returns the result variable in the dataccess file:',result)
+      console.log('DATA ACCESS:lets see what the result variablw returns in the dataccess file:',result)
       return result
     } catch (error) {
       console.log(error)
@@ -71,7 +74,7 @@ export class UserGateway {
   }
 
   private async setupDatabase(): Promise<boolean> {
-    let result:boolean=false
+   
     try{
         this.connection = await mysql.createConnection({
             host: CONFIG.MYSQL_HOST,
@@ -79,6 +82,7 @@ export class UserGateway {
             password: CONFIG.MYSQL_PASSWORD,
             database: CONFIG.MYSQL_DATABASE,
           });
+          console.log('DATA ACCESS:Connection established successfully');
           const tableName = 'users';
           const createTable = `CREATE TABLE IF NOT EXISTS ${tableName} (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -86,10 +90,11 @@ export class UserGateway {
             chatid VARCHAR(255)
           )`;
           const [rows] = await this.connection.execute(createTable);
-          result=true
+          let result=true
           return result
     }catch{
-        result=false
+      console.log("DATA ACCESS:aqui el error")
+        let result=false
         return result
     }
 

@@ -47,32 +47,16 @@ export class Bot {
   }
 
   async enviarMensajeDeAlerta(username: string): Promise<void> {
+    console.log("BOT:enviarMensajeDeAlerta Activated")
     try {
       let chatId = await this.userGateway.getUserData(username);
       if (chatId == null) {
         console.log('chatId es null:',chatId)
       } else {
+        console.log('BOT: chatid is ' + chatId)
         const message = `Hi ${username}, your phone is here, type 'stop' to stop receiving this message`;
-        if (!this.phoneLost) {
-          this.phoneLost = true;
-        }
-        const sendMessage = new Promise<void>((resolve) => {
-          setTimeout(() => {
-            resolve();
-          }, 1000);
-        });
-        const phoneFound = new Promise<void>((resolve) => {
-          const intervalId = setInterval(() => {
-            if (!this.phoneLost) {
-              clearInterval(intervalId);
-              resolve();
-            }
-          }, 1000);
-        });
-        await Promise.race([sendMessage, phoneFound]);
-        if (!this.phoneLost) {
-          await this.bot.telegram.sendMessage(chatId, message);
-        }
+        //i think that the problem is nearby these lines
+        this.bot.telegram.sendMessage(chatId, message);
       }
     } catch (error) {
       console.log(error)
